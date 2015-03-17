@@ -10,9 +10,9 @@ operating-system functionalities.
 
 Components can come in a large variety of shape and form.
 Compared to a monolithic operating-system kernel, a component-based operating
-system challenges the system designed by enlarging the design space with the
+system challenges the system design space by bringing the
 decision of the functional scope of each component and thereby the granularity
-of componentization. This decision depends on several factors:
+of componentization into scope. This decision depends on several factors:
 
 :Security:
   The smaller a component, the lower the risk for bugs and vulnerabilities.
@@ -26,31 +26,31 @@ of componentization. This decision depends on several factors:
 :Performance:
   The split of functionality into multiple components introduces
   inter-component communication and thereby context-switch overhead.
-  If a functionality is known to be critical for performance, such a split
-  should be clearly motivated by a benefit for security.
+  If a functionality is known to be performance critical, such a split
+  should clearly be motivated by a benefit for security.
 
 :Reusability:
-  Componentization can be pursued for improved reusability while sometimes
-  disregarding performance considerations. However, reusability can also be achieved by
+  Componentization can be pursued to improve reusability while sometimes
+  disregarding performance considerations at the same time.  However, reusability can also be achieved by
   moving functionality into libraries that can easily be reused by linking
-  them directly against library-using components. By using a dynamic linker,
-  the linking can even happen at run time, which yields the same flexibility
+  them directly against other components. By using a dynamic linker,
+  linking can even happen at run time, which yields the same flexibility
   as the use of multiple distinct components. Therefore, the split of
   functionality into multiple components for the sole sake of modularization
-  is to be questioned.
+  has to be questioned.
 
 Sections [Device drivers], [Protocol stacks], [Resource multiplexers], and
 [Runtime environments and applications] aid the navigation within the
 componentization design space by discussing the different roles a component
 can play within a Genode system.
-Those can be the role of a device driver, protocol stack, resource
+This can be the role of a device driver, protocol stack, resource
 multiplexer, runtime environment, and that of an application. By
 distinguishing those roles, it becomes possible to assess the possible
-security implications of each individual component.
+security implications of each component.
 
-The versatility of a component-based system does not come from the
-existence of many components alone. Even more important is the
-composability of components. Components can be combined only if their
+The versatility of a component-based system is not only based on the existence
+of many components, but even more important, the
+composability of its components. Components can be combined only if their
 interfaces match. To maximize composability, the number of interfaces
 throughout the system should be as low as possible, and all interfaces
 should be largely orthogonal to each other.
@@ -78,7 +78,7 @@ Figure [img/device_driver] illustrates the typical role of a device driver.
 
 The device interface is defined by the device vendor and typically
 comprises the driving of state machines of the device, the
-notification of device-related events via interrupts, and a means to
+notification of device-related events via interrupts, and the means to
 transfer data from and to the device.
 A device-driver component accesses the device interface via sessions to the
 core services IO_MEM, IO_PORT, and IRQ as described in
@@ -87,11 +87,11 @@ Section [Access to device resources (IO_MEM, IO_PORT, IRQ)].
 ; Translator, not multiplexer
 
 In general, a physical device cannot safely be driven by multiple users at the
-same time. If multiple users accessed one device concurrently, the device
+same time. If multiple users could access one device concurrently, the device
 state would eventually become inconsistent.
-A device driver should not attempt to multiplex a hardware device.
-Instead, to keep its complexity low, it should act as a server that serves
-only a single client per physical device.
+A device driver should never attempt to multiplex a hardware device.
+It should keep the complexity low and act as a server that serves
+only a single client per physical device instead.
 Whereas a device driver for a simple device usually accepts only one client,
 a device driver for a complex device with multiple sub devices (such as
 a USB driver) may hand out each sub device to a different client.
@@ -103,7 +103,7 @@ translates the interface of a single device to a session interface, there is
 not much room for policy anyway. If, however, a device driver hands out
 multiple sub devices to different clients, the assignment of sub devices
 to clients must be subjected to a policy. In this case, the device driver
-should obtain this policy information from its configuration as provided by
+should obtain policy information from its configuration as provided by
 the driver's parent.
 
 
@@ -121,15 +121,15 @@ Problem 1: Device enumeration
 -----------------------------
 
 Modern hardware platforms are rather complex and vary a lot. For example,
-the devices attached to the PCI bus of a PC are usually not known at the
-build time of the system but need to be discovered at run time. Technically,
+the devices attached to the PCI bus of a PC are usually not known at
+system-build time but need to be discovered at run time. Technically,
 each individual device driver could probe its respective device at the
 PCI bus. But in the presence of multiple drivers, this approach would hardly
 work. First, the configuration interface of the PCI bus is a device itself.
 The concurrent access to the PCI configuration interface by multiple drivers
-would ultimately yield undefined behaviour. Second, for being able to speak
-directly to the PCI configuration interface, each driver would need to
-carry with it the functionality to interact with PCI.
+would ultimately yield undefined behaviour. Second, for being able to
+communicate directly with the PCI configuration interface, each driver would
+require the functionality to interact with PCI.
 
 
 Problem 2: Interrupt routing
@@ -143,12 +143,12 @@ Intel introduced the Advanced Programmable Interrupt Controller (APIC). The
 APIC, however, comes with a different name space for interrupt numbers, which
 creates an inconsistency between the numbers provided by the PCI configuration
 (interrupt lines) and interrupt numbers as understood by the APIC. The
-assignment of legacy interrupts to APIC interrupts is provided by tables
-of the Advanced Configuration and Power Interface (ACPI).
+assignment of legacy interrupts to APIC interrupts is provided by the
+Advanced Configuration and Power Interface (ACPI) tables.
 Consequently, in order to support multi-processor PC platforms, the operating
 system needs to interpret those tables. Within a component-based system, we
 need to answer the question of which component is responsible to interpret the
-ACPI tables and how this information is applied to the individual device
+ACPI tables and how this information is applied to individual device
 drivers.
 
 
@@ -158,7 +158,7 @@ Problem 3: Initial hardware setup
 In embedded systems, the interaction of the SoC (system on chip) with its surrounding
 peripheral hardware is often not fixed in hardware but rather a
 configuration issue. For example, the power supply and clocks of certain
-peripherals may be enabled by speaking an I2C protocol with a separate
+peripherals may be enabled by a wrapper  I2C protocol with a separate
 power-management chip. Also, the direction and polarity of the general-purpose
 I/O pins depends largely on the way how the SoC is used. Naturally, such
 hardware setup steps could be performed by the kernel. But this would require
@@ -170,7 +170,7 @@ Central platform driver
 
 The natural solution to these problems is the introduction of a so-called
 platform driver, which encapsulates the peculiarities outlined above. On PC
-platforms, the role of the platform driver is played by the ACPI driver. The
+platforms, the role of the platform driver is executed by the ACPI driver. The
 ACPI driver provides an interface to the PCI bus in the form of a PCI service.
 Device drivers obtain the information about PCI devices by creating a PCI
 session at the ACPI driver. Furthermore, the ACPI driver provides an IRQ
@@ -188,8 +188,8 @@ to platform.
 Interrupt handling
 ~~~~~~~~~~~~~~~~~~
 
-Most device drivers need to respond to sporadic events produced by the
-device and propagated to the CPU as interrupts. In Genode, a device-driver
+Most device drivers need to respond to sporadic device raised events that are
+propagated to the CPU as interrupts. In Genode, a device-driver
 component obtains device interrupts via core's IRQ service introduced in
 Section [Access to device resources (IO_MEM, IO_PORT, IRQ)]. On PC platforms,
 device drivers usually do not use core's IRQ service directly but rather
@@ -212,13 +212,13 @@ may even be used to establish direct data paths between devices.
 However, the benefits of DMA come at the risk of corrupting
 the physical memory by misguided DMA transactions.
 Because those DMA-capable devices can issue bus requests
-targeting the physical memory directly and not involving the CPU altogether, such requests
+that target the physical memory directly while not involving the CPU altogether, such requests
 are naturally not subjected to the virtual-memory mechanism implemented in the
 CPU in the form of a memory-management unit (MMU).
 Figure [img/no_iommu] illustrates the problem. From the device's point of
 view, there is just physical memory.
-Hence, if a driver sets up a DMA transaction, e.g., if a disk driver reads a
-block from the disk, the driver programs the memory-mapped registers of the
+Hence, if a driver sets up a DMA transaction, e.g., if a disk driver wants to read a
+block from the disk, it programs the memory-mapped registers of the
 device with the address and size of a physical-memory buffer where it expects
 to receive the data.
 If the driver lives in a user-level component, as is the case for a
@@ -250,12 +250,12 @@ useful in two ways. First, if the guest OS is the sole user of the device,
 direct assignment of the device maximizes the I/O performance of the
 guest OS using the device. Second, the guest OS may be equipped with a
 proprietary device driver that is not present as a Genode component otherwise.
-In this case, the guest OS may be used as a runtime executing the device
-driver and providing a driver interface to the Genode world. In both cases
+In this case, the guest OS may be used as a runtime that executes the device
+driver, and thus, provides a driver interface to the Genode world. In both cases
 the guest OS should not be considered as trustworthy.
 On the contrary, it bears the risk of subverting the isolation between components.
 A misbehaving guest OS could issue DMA requests referring
-to the physical memory used by other components and even the kernel and
+to the physical memory used by other components, or even the kernel, and
 thereby break out of its virtual machine.
 
 
@@ -268,7 +268,7 @@ on a microcontroller on the device, and is thereby not subjected to the
 policy of the normal operating system. Such firmware may either be built-in
 by the device vendor, or is loaded by the device driver at initialization
 time of the device. In both cases, the firmware tends to be a black box
-that remains obscure except for the device vendor. Hidden functionality
+that remains obscure with the exception of the device vendor. Hidden functionality
 or vulnerabilities might be present in it. By the means of DMA transactions, such
 firmware has unlimited access to the system. For example, a back door
 implemented in the firmware of a network adaptor could look for
@@ -283,7 +283,7 @@ Scenario 3: Bus-level attacks
 
 The previous examples misuse a DMA-capable device as a proxy to drive an
 attack. However, the system bus can be attacked directly with no hardware
-tinkering needed. There are ready-to-exploit interfaces that are featured on most
+tinkering at all. There are ready-to-exploit interfaces that are featured on most
 PC systems. For example, most laptops come with PCMCIA / Express-Card slots,
 which allow expansion cards to access the system bus. Furthermore, serial bus
 interfaces, e.g., IEEE 1394 (Firewire), enable connected devices to indirectly
@@ -369,18 +369,18 @@ onto the framebuffer. For the provisioning of textual user input, it responds
 to key presses reported by the input session, maintains the state of modifier
 keys, and applies a keyboard layout to the stream of incoming events.
 When viewed from the outside of the component, the terminal translates a terminal
-session to a framebuffer session and an input session.
+session to a framebuffer session as well as an input session.
 
 Similar to a device driver, a protocol stack typically serves a single client.
 In contrast to device drivers, however, protocol stacks are not bound to
 physical devices. Therefore, a protocol stack can be instantiated any number
 of times. For example, if multiple terminals are needed, one terminal
-component could be instantiated per terminal. Because each terminal has an
+component could be instantiated per terminal. Because each terminal uses an
 independent instance of the protocol stack, a bug in the protocol stack of one
 terminal does not affect any other terminal. However complex the implementation
 of the protocol stack may be, it is not prone to leaking information to another
 terminal because it is connected to a single client only. The leakage of
-information is constrained to interfaces used by the individual instance.
+information is constrained to interfaces used by an individual instance.
 Hence, in cases like this, the protocol-stack component is suitable
 for hosting highly complex untrusted code if such code cannot be avoided.
 
@@ -413,9 +413,9 @@ a virtual NIC. Another example is a GUI server as depicted in Figure
 the same physical framebuffer and input devices by presenting each
 client in a window or a virtual console.
 
-In contrast to a typical device driver or protocol stack that serves only a
+In contrast to a typical device driver or protocol stack, that serves only a
 single client, a resource multiplexer is shared by potentially many clients.
-In the presence of untrusted clients besides security-critical clients,
+In the presence of untrusted clients, besides security-critical clients,
 a resource multiplexer ultimately becomes a so-called _multi-level_ component.
 This term denotes that the component is cross-cutting the security levels
 of all its clients. This has the following ramifications.
@@ -483,7 +483,7 @@ of all its clients. This has the following ramifications.
 Runtime environments and applications
 =====================================
 
-The component types discussed in the previous sections have in common that
+What the component types discussed in the previous sections have in common is that
 they deliberately lack built-in policy but act according to a policy
 supplied by their respective parents by the means of configuration.
 This raises the question where those policies should come from.
@@ -541,12 +541,12 @@ a large variety of policies using two principal approaches:
   Internally, each session of such a local service may create a session to the
   real core service, thereby effectively wrapping core's sessions.
   This way, the runtime environment can not only observe the interaction of
-  its child with core services but also implement custom resource-management
+  a child with core services but also implement custom resource-management
   strategies, for example, sharing one single budget among multiple children.
 
 Canonical examples of runtime environments are the init component that
 applies a policy according to its configuration, the noux runtime that
-presents itself as a Unix kernel to its children, a debugger that
+exposes itself as a Unix kernel to its children, a debugger that
 interposes all core services for the debugging target, or a virtual machine
 monitor.
 
@@ -599,7 +599,7 @@ Session creation
 
 At session-creation time, the client specifies the name of a ROM module as
 session argument. One server may hand out different ROM modules depending
-on the specified name. Once a ROM session has been created, the client can
+on the name specified. Once a ROM session has been created, the client can
 request the capability of the dataspace that contains the ROM module.
 Using this capability and the client's RM session, the client can attach
 the ROM module to its local address space and thereby access the information.
@@ -624,31 +624,31 @@ client and server consists of the following steps.
   new version separately and informs the client by submitting a signal to
   the client's signal handler.
 
-# The client continues working with the original version of the dataspace.
-  Once it receives the signal from the server, it may decide to update the
-  dataspace by calling the _update_ function at the server.
+# While the client still continues to work with the original version of the
+  dataspace, signal reception from the server may trigger the decisione to update the
+  dataspace by calling the _update_ function of the server.
 
-# The server responds to the update request. If the new version fits into
+# The server then responds to the update request. If the new version fits into
   the existing dataspace, the server copies the content of the new version
-  into the existing dataspace and returns this condition in the reply of the
+  into the existing dataspace and returns this condition during the reply of the
   update call. Thereby, the ROM session interface employs synchronous bulk
   transfers as described in Section [Synchronous bulk transfer].
 
-# The client evaluates the result of the update call. If the new version
-  did fit in the existing dataspace, the update is complete at this point.
+# Next, the client evaluates the result of the update call. If the new version
+  did fit into the existing dataspace, the update is complete at this point.
   However, if the new version is larger than the existing dataspace, the
   client requests a new dataspace from the server.
 
-# On reception of the dataspace request, the server destroys the original
-  dataspace (thereby making it invisible at the client), and returns
-  the new version of the ROM module as a different dataspace.
+# Upon reception of the dataspace request, the server destroys the original
+  dataspace (thereby making it invisible to the client), and returns
+  the new version of the ROM module as a freshly allocated dataspace.
 
-# The client attaches the new dataspace capability to its local address
-  space to access the new version.
+# During the last step, the  client attaches the new dataspace capability to its local address
+  space and thus is able to access the new version.
 
-The protocol is designed such that neither the client nor the server need
-to support updates. A server with no support for updating ROM modules such
-as core's ROM service simply ignores the registration of a signal handler
+The protocol is designed in such a way that neither the client nor the server need
+to support updates. A server with no support for updating ROM modules, such
+as core's ROM service, simply ignores the registration of a signal handler
 by a client. A client that is not able to cope with ROM-module updates
 never requests the dataspace twice.
 
@@ -679,7 +679,7 @@ mapped fashion.
   binaries and shared libraries are requested in the form of ROM sessions.
 
 * Components obtain their configuration by requesting a ROM session for the
-  ROM module "config" at the parent (Section [Component configuration]).
+  "config" ROM module at their respective parent (Section [Component configuration]).
   This way, configuration information
   can be propagated using a simple interface with no need for a file
   system. Furthermore, the update mechanism allows the parent to dynamically
@@ -694,7 +694,7 @@ mapped fashion.
 Report
 ~~~~~~
 
-The report session interface allows a client to report internal state to
+The report session interface allows a client to report its internal state to
 the outside using synchronous bulk transfers
 (Section [Synchronous bulk transfer]).
 
@@ -704,7 +704,7 @@ Session creation
 At session-creation time, the client specifies a label and a buffer size.
 The label aids the routing of the session request but may also be used
 to select a policy at the report server. The buffer size determines the
-size of the dataspace shared between the report server and client.
+size of the dataspace shared between the report server and its client.
 
 Use cases
 ---------
@@ -726,8 +726,8 @@ Terminal and UART
 
 The terminal session interface provides a bi-directional communication
 channel between client and server using synchronous bulk transfers
-(Section [Synchronous bulk transfer]). It is primarily meant for textual
-user interfaces but may also be used to transfer other serial streams of
+(Section [Synchronous bulk transfer]). It is primarily meant to be used for textual
+interfaces but may also be used to transfer other serial streams of
 data.
 
 The interface uses the two RPC functions _read_ and _write_ to arbitrate
@@ -736,13 +736,13 @@ as described in Section [Synchronous bulk transfer]. The read function
 never blocks. When called, it copies new input into the communication buffer
 and returns the number of new characters. If there is no new input, it
 returns 0. To avoid the need to poll for new input at the client side, the
-client can register a signal handler that gets notified on the arrival of
+client can register a signal handler that gets notified upon the arrival of
 new input. The write function takes the number of to-be-written characters
 as argument. The server responds to this function by processing the specified
 amount of characters from the communication buffer.
 
 Besides the actual read and write operations, the terminal supports the
-querying of the number of new available input (without reading it) and the
+querying of the number of new input available (without reading it) as well as the
 terminal size in rows and columns.
 
 
@@ -765,14 +765,14 @@ Use cases
 ---------
 
 * Device drivers that provide streams of characters in either direction.
-* Graphical terminal.
-* Transfer of streams of data over TCP (using TCP terminal).
-* Writing streams of data to a file (using file terminal).
+* A graphical terminal.
+* Transfer of streams of data over TCP (using the TCP terminal).
+* Writing streams of data to a file (using a file terminal).
 * User input and output of traditional command-line based software, i.e.,
-  programs executed in the noux runtime environment.
+  programs executed in the noux-runtime environment.
 * Multiplexing of multiple textual user interfaces (using the terminal-mux
   component).
-* Headless operation and management of subsystems (using CLI monitor).
+* Headless operation and management of subsystems (using the CLI monitor).
 
 
 UART
@@ -789,7 +789,7 @@ Input
 
 The input session interface is used to communicate low-level user-input
 events from the server to the client using synchronous bulk transfers
-(Section [Synchronous bulk transfer]). Such an event can be of one of the
+(Section [Synchronous bulk transfer]). Such an event can be any one of the
 following types:
 
 :press or release: of a button or key. Each physical button (such as a mouse
@@ -797,19 +797,19 @@ following types:
   value. At the input-session level, key events are reported as raw hardware
   events. They are reported without a keyboard layout applied and without any
   interpretation of meta keys (like shift, alt, and control). This gives the
-  client the flexibility to handle arbitrary combination of keys.
+  client the flexibility to handle arbitrary combinations of keys.
 
 :relative motion: of pointer devices such as a mouse. Such events are
   generated by device drivers.
 
 :absolute motion: of pointer devices such as a touch screen or graphics
   tablet. Furthermore absolute motion events are generated by virtual
-  input devices such as the input session provided by a GUI server.
+  input devices, like the input session provided by a GUI server.
 
 :wheel motion: of scroll wheels in vertical and horizontal directions.
 
 :focus: of the session. Focus events are artificially generated by servers
-  to indicate a gained or lost keyboard focus of the client. The client
+  to indicate a gained or lost keyboard focus to the client. The client
   may respond to such an event by changing its graphical representation
   accordingly.
 
