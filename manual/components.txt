@@ -60,7 +60,7 @@ interfaces.
 Components can be used in different ways depending on their configuration and
 their position within the component tree. Section [Component configuration]
 explains how a component obtains and processes its configuration.
-Section [Component compositions] discusses the most prominent options of
+Section [Component composition] discusses the most prominent options of
 composing components.
 
 
@@ -553,7 +553,7 @@ monitor.
 A typical _application_ is a leaf node in the component tree that merely uses
 services. In practice, however, the boundary between applications and runtime
 environments can be blurry.
-As illustrated in Section [Component compositions], Genode fosters the
+As illustrated in Section [Component composition], Genode fosters the
 internal split of applications into several components, thereby forming
 _multi-component applications_.
 From the outside, such a multi-component application appears as a leaf node of
@@ -858,8 +858,8 @@ mode via the _mode_ RPC function.
 Screen-mode changes
 -------------------
 
-The session interface supports dynamic screen-mode changes during the lifetime
-of the session using the following protocol:
+The session interface supports dynamic screen-mode changes during
+session lifetime using the following protocol:
 
 # The client may register a signal handler using the _mode_sigh_ RPC function.
   This handler gets notified in the event of server-side mode changes.
@@ -870,7 +870,7 @@ of the session using the following protocol:
   the _mode_ RPC function.
 
 # The server responds to the _mode_ function by applying the new mode and
-  returning the corresponding mode information to the client. This step may
+  returns the corresponding mode information to the client. This step may
   destroy the old framebuffer dataspace.
 
 # The client requests a new version of the frambuffer dataspace by calling
@@ -912,9 +912,9 @@ Nitpicker GUI
 
 The nitpicker session interface combines an input session and a
 framebuffer session into a single session (Figure [img/nitpicker_session]).
-Furthermore it supplements the framebuffer session with the notion of views,
+Furthermore, it supplements the framebuffer session with the notion of views,
 which allows the creation of flexible multi-window user interfaces.
-It is generally suited for resource multiplexers of the framebuffer and input
+The interface is generally suited for resource multiplexers of the framebuffer and input
 sessions.
 A view is a rectangular area on screen that displays a portion of the client's
 virtual framebuffer. The position, size, and viewport of each view is defined
@@ -947,8 +947,8 @@ Platform
 ~~~~~~~~
 
 The platform session interface (on ARM-based devices) and the PCI session
-interface (on x86-based machines) provide the client with access to the
-devices present on the hardware platform. See Section [Platform driver]
+interface (on x86-based machines) offer device access for a hardware platform to
+the client. See Section [Platform driver]
 for more information on the role of platform drivers.
 
 
@@ -1038,7 +1038,7 @@ Audio output
 The audio output interface allows for the transfer of audio data from the
 client to the server.
 One session corresponds to one channel. I.e., for
-stereo output, two audio-out sessions are needed.
+stereo output, two audio-out sessions are required.
 
 
 Session construction
@@ -1186,7 +1186,7 @@ a nitpicker session (Section [Nitpicker GUI]). The loader responds to such a
 session request by providing a locally implemented session. The loader
 subordinates the nitpicker session of the loaded subsystem to a nitpicker
 view (called parent view) defined by the loader client.
-The loader client can use the loader session interface to position the view
+The loader client can use the loader-session interface to position the view
 relative to the parent-view position. Thereby, the graphical user interface
 of the loaded subsystem can be seamlessly integrated with the user interface
 of the loader client.
@@ -1208,7 +1208,7 @@ ROM module named "config". The ROM session for this ROM module is provided
 by the parent of the component. For example, for the init component, which is
 the immediate child of core, its "config" ROM module is provided by core's
 ROM service. Init, in turn, provides a different config ROM module to each
-of its children by providing a locally implemented ROM service per child.
+of its children by a locally implemented ROM service per child.
 
 
 Configuration format
@@ -1260,18 +1260,18 @@ Dynamic component reconfiguration at runtime
 As described in Section [Read-only memory (ROM)], a ROM module can be updated
 during the lifetime of the ROM session. This principally enables a parent
 to dynamically reconfigure a child component without the need to restart it.
-If a component supports its dynamic reconfiguration, it installs a signal
+If a component supports dynamic reconfiguration, it installs a signal
 handler at its "config" ROM session. Each time, the configuration changes,
-the component will receive a signal. It responds to such a signal by obtaining
+the component will receive a signal. It then responds to such a signal by obtaining
 the new version of the ROM module using the steps described in
 Section [Read-only memory (ROM)] and applying the new configuration.
 
 
-Component compositions
-======================
+Component composition
+=====================
 
 Genode provides a playground for combining components in many different ways.
-The best composition of components often depends on the goal of the system
+The best composition of components often depends on the goals of the system
 integrator. Among possible goals are the ease of use for the end user, the
 cost-efficient reuse of existing software, and good application
 performance. However, the most prominent goal is the mitigation of security
@@ -1297,7 +1297,7 @@ reusing or economically downright infeasible to reimplement. Examples
 are PDF rendering engines, libraries that support commonly used video and
 audio codecs, or libraries that decode hundreds of image formats.
 
-However, code of such rich functionality is inherently complex and must be
+However, code of such a rich functionality is inherently complex and must be
 assumed to contain security flaws. This is empirically evidenced by the
 never ending stream of security exploits targeting the decoders of data
 formats. But even in the absence of bugs, the processing of data by
@@ -1305,7 +1305,7 @@ third-party libraries may have unintended side effects. For example,
 a PDF file may contain code that accesses the file system, which the user
 of a PDF reader may not expect. By linking such a third-party library to a
 security-critical application, the application's security is seemingly traded
-against the functional value that the library provides.
+against the functional value that the library offers.
 
 [tikz img/qt_avplay]
   A video player executes the video and audio codecs inside a dedicated
@@ -1333,16 +1333,16 @@ to output an audio stream in the form of an audio-out session.
 In order to reuse as much code as possible, the video player executes an
 existing example application called avplay that comes with the codec library
 as child component.
-The avplay example uses libSDL as backend for video and audio
+The avplay example uses libSDL as back end for video and audio
 output and responds to a few keyboard shortcuts for controlling the video
 playback such as pausing the video. Because there exists a Genode version
 of libSDL, avplay can be executed as a Genode component with no modifications.
 This version of libSDL requests a framebuffer session (Section [Framebuffer])
 and an audio-out session (Section [Audio output]) to perform the video and
 audio output.
-To handle user input, it opens an input session (Section [Input]).
+To handle user input, libSDL opens an input session (Section [Input]).
 Furthermore, it opens a ROM session for obtaining a configuration. This
-configuration parametrizes the audio backend of libSDL.
+configuration parametrizes the audio back end of libSDL.
 Because avplay is a child of the video-player application, all those session
 requests are directed to the application. It is entirely up to the application
 how to respond to those requests. For accommodating the
@@ -1361,7 +1361,7 @@ To let the user adjust the audio parameters of libSDL during playback,
 the video-player application dynamically changes the avplay configuration
 using the mechanism described in
 Section [Dynamic component reconfiguration at runtime]. As a response to a
-configuration update, libSDL's audio backend picks up the changed
+configuration update, libSDL's audio back end picks up the changed
 configuration parameters and adjusts the audio playback accordingly.
 
 By sandboxing avplay as a child component of the video player, a bug in
@@ -1369,7 +1369,7 @@ the video or audio codecs can no longer compromise the application. The
 execution environment of avplay is tailored to the needs of the codec.
 In particular, it does not allow the codec to access any files or the
 network. In the worst case, if avplay becomes corrupted, the possible
-damage is restricted to producing wrong video or audio frames but corrupted
+damage is restricted to producing wrong video or audio frames but a corrupted
 codec can neither access any of the user's data nor can it communicate to the
 outside world.
 
@@ -1381,7 +1381,7 @@ The sandboxing technique presented in the previous section tailors the
 execution environment of untrusted third-party code by applying an
 application-specific policy to all session requests originating from the
 untrusted code. However, the tailoring of the execution environment by
-the parent can go even a step further by providing the all-encompassing
+the parent can even go a step further by providing the all-encompassing
 virtualization of all services used by the child, including core's services
 such as RAM, RM, and CPU.
 This way, the parent can not just tailor the execution environment of a child
@@ -1428,7 +1428,7 @@ Since noux handles all the children's interaction with the RAM service, it can
 hand out memory allocations from a pool of memory shared among all children.
 Finally, because noux observes all the interactions of each child with the
 RM service, it is able to replay the address-space layout of an existing
-process to a new process when the process forks.
+process to a new process when fork is called.
 
 
 Monitoring the behavior of subsystems
@@ -1448,7 +1448,7 @@ Those sessions include at least a RAM session, a CPU session, and an RM session
 as depicted in Figure [img/no_gdb]. In addition to those low-level sessions,
 the component may interact with sessions provided by other components.
 
-For debugging the component, a debugger would need a way to inspect the
+For debugging a component, a debugger would need a way to inspect the
 internal state of the component. As the complete internal state is usually
 known by the OS kernel only, the traditional approach to user-level debugging
 is the introduction of a debugging interface into the kernel. For example,
@@ -1467,7 +1467,7 @@ altogether.
   in turn, is controlled from a remote debugger.
 
 In a Genode system, the component's internal state is represented in the
-form of core sessions. Hence, by intercepting those sessions for a child,
+form of core sessions. Hence, by intercepting those sessions of a child,
 a parent can monitor all interactions of the child with core and thereby
 record the child's internal state. Figure [img/gdb_monitor] shows a
 scenario where a debug monitor executes a component (debugging target) as a
@@ -1503,7 +1503,7 @@ Interposing individual services
 
 The design of Genode's fundamental services, in particular resource
 multiplexers, is guided by the principle of minimalism. Because such
-components are critical for security, complexity must be avoided.
+components are security critical, complexity must be avoided.
 Functionality is added to such components only if it cannot be provided
 outside the component.
 
@@ -1576,8 +1576,8 @@ When using a shell to manage subsystems, the complexity of the shell
 naturally becomes a security risk. A shell can be a text-command interpreter,
 a graphical desktop shell, a web browser that launches subsystems
 as plugins, or a web server that provides a remote administration interface.
-All those kinds of shells have in common that they contain
-an enormous amount of complexity that is attributed to convenience.
+What all those kinds of shells have in common is that they contain
+an enormous amount of complexity that can be attributed to convenience.
 For example, a textual shell usually depends on libreadline, ncurses, or similar
 libraries to provide a command history and to deal with the peculiarities of
 virtual text terminals. A graphical desktop shell is even worse because
@@ -1587,7 +1587,7 @@ Unfortunately, the functionality provided by these programs cannot be
 dismissed as it is expected by the user. But the high complexity of the
 convenience functions fundamentally contradicts the security-critical
 role of the shell as the common parent of all spawned subsystems. If the
-shell gets compromised, all the spawned subsystems suffer.
+shell gets compromised, all the spawned subsystems will suffer.
 
 [tikz img/arora_plugin]
   A web browser spawns a plugin by ceding the parenthood of the plugin to
@@ -1630,7 +1630,7 @@ be useful for other components. For example, a wireless-networking driver may
 report the list of detected wireless networks along with their respective
 SSIDs and reception qualities such that a GUI component can pick up the
 information and present it to the user. Each time, the driver detects a change
-in the ether, it likes to publish an updated version of the list. Such a
+in the ether, it wants to publish an updated version of the list. Such a
 scenario could principally be addressed by introducing a use-case-specific
 session interface, i.e., a "wlan-list" session. But this approach has two
 disadvantages.
@@ -1670,7 +1670,7 @@ would create a report session. Each time, the list of networks changes, it
 would submit an updated list as a report to the report-ROM server.
 
 The report-ROM server stores incoming reports in a database using the client's
-session label as key. So the wireless driver's report will end up in the
+session label as key. Therefore, the wireless driver's report will end up in the
 database under the name of the driver component. If one component wishes to
 post reports of different kinds, it can do so by extending the session label
 by a component-provided label suffix supplied as session-construction argument
@@ -1678,7 +1678,7 @@ by a component-provided label suffix supplied as session-construction argument
 the report-ROM server is accounted to the report client via the session-quota
 mechanism described in Section [Trading memory between clients and servers].
 
-In its role of a ROM service, the report-ROM server hands out the reports
+In its ROM-service role, the report-ROM server hands out the reports
 stored in its database as ROM modules. The association of reports with
 ROM sessions is based on the session label of the ROM client. The
 configuration of the report-ROM server contains a list of policies as
@@ -1778,7 +1778,7 @@ final image, the
 application obtains the composed image from nitpicker's
 framebuffer.
 
-Note that by calling the slave, the parent does not need to trust the
+Note that when calling the slave, the parent does not need to trust the
 slave with respect to the integrity and confidentiality of its internal
 state (see the discussion in Section [Client-server relationship]). By
 performing the call, only the liveliness of the parent is potentially
